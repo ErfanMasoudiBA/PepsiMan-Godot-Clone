@@ -22,3 +22,5 @@ This project is a clone of the "Pepsi Man" endless runner game, developed using 
 
 ## 📝 Reflection
 During this project, I learned how to manage memory in endless runners by removing old road tiles (`queue_free`). I also learned to use `Mathf.lerp` for smooth player movement and `ConfigFile` for persistent data storage similar to Unity's PlayerPrefs.
+
+NOTE: the main report and documention of the project is in report.pdf file.
