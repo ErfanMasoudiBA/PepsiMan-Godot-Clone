@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3 uid="uid://d3tbuejpetto5"]
+
+[ext_resource type="Script" uid="uid://bfm7iyvxxti1x" path="res://Scripts/RoadTile.gd" id="1_a6mq1"]
+[ext_resource type="Material" uid="uid://d2i6c87ay0sat" path="res://Assets/BlueMaterial.tres" id="2_s81pt"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_s81pt"]
+size = Vector3(10, 0.1, 20)
+
+[node name="RoadTile" type="Node3D"]
+script = ExtResource("1_a6mq1")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+material_override = ExtResource("2_s81pt")
+mesh = SubResource("BoxMesh_s81pt")
+
+[node name="EndConnector" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -20)

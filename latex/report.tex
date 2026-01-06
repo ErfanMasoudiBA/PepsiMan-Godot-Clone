@@ -1,0 +1,520 @@
+\documentclass[a4paper,12pt]{article}
+
+% --- پکیج‌های مورد نیاز ---
+\usepackage{graphicx}       % برای وارد کردن تصاویر
+\usepackage{float}          % برای جایگذاری دقیق تصاویر
+\usepackage{geometry}       % تنظیم حاشیه‌ها
+\usepackage{xcolor}         % برای رنگ‌بندی کدها
+\usepackage{listings}       % برای نمایش کدهای برنامه
+\usepackage{hyperref}       % برای لینک‌دار کردن فهرست و لینک‌های خارجی
+\usepackage{xepersian}      % برای پشتیبانی از زبان فارسی (باید آخرین پکیج باشد)
+
+% --- تنظیمات صفحه ---
+\geometry{top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm}
+
+% --- تنظیم فونت (نام فونت نصب شده روی سیستم خود را بنویسید) ---
+\settextfont{XB Niloofar}
+\setlatintextfont{Times New Roman}
+
+% --- تنظیمات نمایش کد (شبیه به ادیتور Godot) ---
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{codeblue}{rgb}{0,0,0.8}
+
+\lstset{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{codeblue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize\latin, % لاتین بودن کدها
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=4,
+    frame=single
+}
+
+% --- اطلاعات پروژه ---
+\title{گزارش تمرین سوم: توسعه بازی Pepsi Man با موتور Godot}
+\author{نام و نام خانوادگی شما}
+\date{\today}
+
+\begin{document}
+
+% --- صفحه عنوان ---
+\begin{titlepage}
+    \centering
+    \vspace*{1cm}
+    
+    \includegraphics[width=0.4\textwidth]{logo.png} % لوگوی دانشگاه یا عکس بازی (فایل logo.png باید کنار فایل تکس باشد)
+    \vspace{1cm}
+    
+    \Huge
+    \textbf{گزارش فنی پروژه بازی‌سازی}
+    
+    \vspace{0.5cm}
+    \LARGE
+    پیاده‌سازی کلون بازی Pepsi Man
+    
+    \vspace{1.5cm}
+    
+    \textbf{نام دانشجو:} \\
+    سید عرفان مسعودی
+    
+    \vspace{1cm}
+    
+    \textbf{استاد درس:} \\
+    استاد مینائی
+    
+    \vspace{2cm}
+    
+    \Large
+    دانشکده مهندسی کامپیوتر\\
+    دانشگاه علم و صنعت ایران\\
+    \today
+    
+\end{titlepage}
+
+% --- فهرست مطالب ---
+\tableofcontents
+\newpage
+
+% --- شروع محتوای اصلی ---
+\section{مقدمه}
+در این پروژه، هدف طراحی و توسعه یک بازی در سبک \lr{Endless Runner} مشابه بازی نوستالژیک \lr{Pepsi Man} است. اگرچه در صورت تمرین استفاده از موتور \lr{Unity} پیشنهاد شده بود، اما در این پیاده‌سازی از موتور قدرتمند و متن‌باز \lr{Godot Engine 4} و زبان برنامه‌نویسی \lr{GDScript} استفاده شده است. تمام مکانیک‌های خواسته شده شامل حرکت سه لاینه، تولید مسیر پویا، سیستم امتیازدهی و ذخیره‌سازی رکورد به طور کامل پیاده‌سازی شده‌اند.
+
+\section{توضیحات کلی بازی}
+
+بازی \lr{Pepsi Man Runner} یک بازی سه بعدی از نوع \lr{Endless Runner} است که با موتور \lr{Godot 4} و زبان \lr{GDScript} پیاده‌سازی شده است. این بازی دارای مکانیک‌های اصلی زیر است:
+
+\begin{itemize}
+    \item حرکت خودکار شخصیت اصلی به سمت جلو
+    \item امکان جابجایی بین سه لاین (چپ، وسط، راست)
+    \item تولید پویای مسیر و موانع
+    \item سیستم امتیازدهی
+    \item سیستم ذخیره‌سازی رکورد
+    \item امکان ریستارت بازی
+\end{itemize}
+
+\section{ساختار بازی}
+
+بازی دارای چندین سین (Scene) اصلی است:
+
+\subsection{Main Scene}
+
+این صحنه اصلی بازی است که شامل موارد زیر می‌شود:
+\begin{itemize}
+    \item یک نور جهت‌دار (Directional Light)
+    \item محیط جهان (World Environment)
+    \item زمین (Ground) که با یک \lr{CSGBox3D} ایجاد شده است
+    \item شخصیت بازیکن (Player) که از \lr{CharacterBody3D} ارث می‌برد
+    \item یک تکه جاده اولیه
+    \item یک نمونه \lr{LevelGenerator} برای تولید پویای مسیر
+    \item لایه \lr{UI} شامل نمایش امتیاز، بهترین امتیاز و پنل \lr{Game Over}
+\end{itemize}
+
+\subsection{Player Scene}
+
+صحنه شخصیت بازیکن که شامل یک \lr{CharacterBody3D} با مشخصات زیر است:
+\begin{itemize}
+    \item یک \lr{MeshInstance3D} با شکل کپسول
+    \item یک \lr{CollisionShape3D} با شکل کپسول برای تشخیص تصادف
+    \item یک دوربین (Camera3D) برای دید بازیکن
+\end{itemize}
+
+\subsection{RoadTile Scene}
+
+یک تکه از جاده که شامل یک \lr{BoxMesh} با ابعاد 10×0.1×20 متر است. این صحنه دارای یک \lr{EndConnector} در انتهای جاده است که برای تولید پویا مفید است.
+
+\subsection{Obstacle Scene}
+
+صحنه مانع که یک \lr{Area3D} است و شامل یک \lr{BoxMesh} و یک \lr{CollisionShape3D} است. این مانع با ورود شخصیت بازیکن به محدوده خود، بازی را پایان می‌دهد.
+
+\section{اسکریپت‌های اصلی}
+
+\subsection{Player.gd}
+
+این اسکریپت کنترل شخصیت بازیکن است و شامل موارد زیر است:
+
+\begin{itemize}
+    \item متغیرهای \lr{FORWARD\_SPEED} (10.0) برای سرعت حرکت به جلو
+    \item متغیر \lr{LANE\_DISTANCE} (3.0) برای فاصله بین لاین‌ها
+    \item متغیر \lr{LERP\_SPEED} (10.0) برای سرعت جابجایی نرم بین لاین‌ها
+    \item متغیر \lr{current\_lane} که مقدار 0 برای وسط، -1 برای چپ و 1 برای راست است
+    \item تابع \lr{physics\_process} که شامل سه بخش است:
+    \begin{itemize}
+        \item مدیریت ورودی برای تغییر لاین (کلیدهای چپ و راست)
+        \item حرکت خودکار به سمت جلو
+        \item حرکت نرم به سمت لاین هدف با استفاده از \lr{Lerp}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Obstacle.gd}
+
+این اسکریپت برای تشخیص برخورد بازیکن با مانع استفاده می‌شود:
+\begin{itemize}
+    \item زمانی که یک \lr{body} وارد محدوده می‌شود، چک می‌کند آیا نام آن \lr{Player} است یا خیر
+    \item اگر بازیکن بود، پیام \lr{Game Over} را چاپ می‌کند
+    \item تابع \lr{game\_over()} را در نود اصلی فراخوانی می‌کند
+\end{itemize}
+
+\subsection{Main.gd}
+
+اسکریپت نود اصلی بازی که مسئولیت‌های زیر را دارد:
+
+\begin{itemize}
+    \item نمایش امتیاز و بهترین امتیاز در \lr{UI}
+    \item مدیریت وضعیت \lr{Game Over}
+    \item ذخیره و بارگذاری بهترین امتیاز در فایل
+    \item ریستارت بازی
+\end{itemize}
+
+این اسکریپت شامل توابع زیر است:
+\begin{itemize}
+    \item \lr{update\_ui}: به‌روزرسانی نمایش امتیاز
+    \item \lr{game\_over}: مدیریت وضعیت باخت
+    \item \lr{restart\_game}: ریستارت بازی
+    \item \lr{save\_high\_score}: ذخیره رکورد در فایل
+    \item \lr{load\_high\_score}: بارگذاری رکورد از فایل
+\end{itemize}
+
+\subsection{LevelGenerator.gd}
+
+این اسکریپت برای تولید پویای جاده استفاده می‌شود:
+\begin{itemize}
+    \item 10 تکه جاده در ابتدا ایجاد می‌شود
+    \item زمانی که بازیکن از یک تکه جاده فراتر می‌رود، آن تکه حذف و یک تکه جدید در انتهای مسیر ایجاد می‌شود
+    \item از یک لیست برای مدیریت تکه‌های جاده فعال استفاده می‌کند
+\end{itemize}
+
+\subsection{RoadTile.gd}
+
+اسکریپت یک تکه جاده که شامل تابع \lr{spawn\_obstacle} است:
+\begin{itemize}
+    \item یک عدد تصادفی بین 0 تا 2 انتخاب می‌کند
+    \item عدد انتخابی را به -1، 0 یا 1 تبدیل می‌کند (برای سه لاین)
+    \item یک نمونه از مانع ایجاد می‌کند و آن را در موقعیت تصادفی بر روی جاده قرار می‌دهد
+\end{itemize}
+
+\section{مکانیک‌های بازی}
+
+\subsection{حرکت 3 لاینی}
+
+بازیکن می‌تواند بین سه لاین حرکت کند: چپ (X = -3)، وسط (X = 0) و راست (X = 3). این کار با فشردن کلیدهای چپ و راست انجام می‌شود. حرکت بین لاین‌ها نرم است و با استفاده از \lr{Lerp} انجام می‌شود.
+
+\subsection{تولید پویای مسیر}
+
+بازی از یک سیستم تولید پویا برای ایجاد مسیر استفاده می‌کند. هر تکه جاده 20 متر طول دارد و زمانی که بازیکن از یک تکه فراتر می‌رود، آن تکه حذف و یک تکه جدید در انتهای مسیر ایجاد می‌شود.
+
+\subsection{سیستم امتیازدهی}
+
+امتیاز بازیکن در هر فریم افزایش می‌یابد و بهترین امتیاز در فایل \lr{user://savegame.cfg} ذخیره می‌شود. این فایل در پوشه مخصوص کاربر در سیستم عامل ذخیره می‌شود.
+
+\subsection{سیستم برخورد}
+
+زمانی که شخصیت بازیکن با مانع برخورد می‌کند، تابع \lr{game\_over()} فراخوانی می‌شود که بازی را پایان داده و پنل \lr{Game Over} را نمایش می‌دهد.
+
+\section{کنترل‌ها}
+
+\begin{itemize}
+    \item کلید چپ (Left Arrow): حرکت به لاین چپ
+    \item کلید راست (Right Arrow): حرکت به لاین راست
+    \item دکمه \lr{Restart}: ریستارت بازی
+\end{itemize}
+
+\section{نتیجه‌گیری}
+
+بازی \lr{Pepsi Man Runner} یک نمونه خوب از یک بازی \lr{Endless Runner} است که تمام مکانیک‌های اصلی مورد نیاز را پیاده‌سازی کرده است. این پروژه نشان می‌دهد که چگونه می‌توان با استفاده از موتور \lr{Godot} و زبان \lr{GDScript} یک بازی جذاب و کاربردی ساخت. معماری کد نیز خوب ساختاریافته است و هر اسکریپت مسئولیت خاصی را بر عهده دارد.
+
+\section{توضیحات گام به گام کدها}
+
+\subsection{Player.gd}
+
+\begin{lstlisting}[language=Python, caption={اسکریپت شخصیت بازیکن}]
+extends CharacterBody3D
+
+const FORWARD_SPEED = 10.0  \textlr{\# سرعت حرکت رو به جلو}
+const LANE_DISTANCE = 3.0   \textlr{\# فاصله بین لاین‌ها}
+const LERP_SPEED = 10.0     \textlr{\# سرعت نرم جابجایی بین لاین‌ها}
+
+\textlr{\# 0 = وسط، -1 = چپ، 1 = راست}
+var current_lane = 0 
+var target_x = 0.0
+
+func _ready():
+	\textlr{\# تنظیم لاین اولیه}
+	target_x = 0.0
+
+func _physics_process(delta):
+	\textlr{\# 1. مدیریت ورودی برای تغییر لاین}
+	if Input.is_action_just_pressed("ui_left"):
+		if current_lane > -1:
+			current_lane -= 1
+	
+	if Input.is_action_just_pressed("ui_right"):
+		if current_lane < 1:
+			current_lane += 1
+			
+	\textlr{\# محاسبه موقعیت هدف در محور X بر اساس لاین انتخاب شده}
+	target_x = current_lane * LANE_DISTANCE
+	
+	\textlr{\# 2. حرکت خودکار رو به جلو (در گودوت منفی Z یعنی جلو)}
+	velocity.z = -FORWARD_SPEED
+	
+	\textlr{\# 3. حرکت نرم به سمت لاین هدف (Interpolation)}
+	velocity.x = (target_x - position.x) * LERP_SPEED
+	
+	\textlr{\# اعمال حرکت}
+	move_and_slide()
+\end{lstlisting}
+
+\textbf{توضیحات:}
+\begin{enumerate}
+	\item ابتدا کلاس \lr{CharacterBody3D} اکستند می‌شود که یک نود فیزیکی است که می‌تواند حرکت کند و با محیط تعامل داشته باشد.
+	\item سه ثابت تعریف می‌شوند: \lr{FORWARD\_SPEED} برای سرعت حرکت به جلو، \lr{LANE\_DISTANCE} برای فاصله بین لاین‌ها و \lr{LERP\_SPEED} برای سرعت جابجایی نرم بین لاین‌ها.
+	\item متغیر \lr{current\_lane} نشان‌دهنده لاین فعلی بازیکن است (0 برای وسط، -1 برای چپ، 1 برای راست).
+	\item در تابع \lr{\_ready}، موقعیت اولیه هدف روی 0 تنظیم می‌شود.
+	\item در تابع \lr{\_physics\_process}، ابتدا ورودی‌های کلیدهای چپ و راست بررسی می‌شوند.
+	\item اگر کلید چپ فشرده شود و بازیکن در لاین انتهایی چپ نباشد، یک لاین به سمت چپ حرکت می‌کند.
+	\item اگر کلید راست فشرده شود و بازیکن در لاین انتهایی راست نباشد، یک لاین به سمت راست حرکت می‌کند.
+	\item موقعیت هدف در محور X بر اساس لاین فعلی محاسبه می‌شود.
+	\item سرعت در جهت Z (به جلو) تنظیم می‌شود تا شخصیت به طور خودکار حرکت کند.
+	\item سرعت در جهت X برای حرکت نرم به سمت لاین هدف محاسبه می‌شود.
+	\item در نهایت تابع \lr{move\_and\_slide} فراخوانی می‌شود تا حرکت اعمال شود.
+\end{enumerate}
+
+\subsection{Obstacle.gd}
+
+\begin{lstlisting}[language=Python, caption={اسکریپت مانع}]
+extends Area3D
+
+func _on_body_entered(body):
+	\textlr{\# بررسی می‌کنیم چیزی که وارد شده بازیکن است یا نه}
+	if body.name == "Player":
+		print("Game Over!")
+		
+		\textlr{\# پیدا کردن نود Main و صدا زدن تابع باخت}
+		\textlr{\# چون Obstacle فرزند RoadTile و RoadTile فرزند LevelGenerator است،}
+		\textlr{\# دسترسی مستقیم سخت است. از روش زیر استفاده می‌کنیم:}
+		var main = get_tree().current_scene
+		if main.has_method("game_over"):
+			main.game_over()
+\end{lstlisting}
+
+\textbf{توضیحات:}
+\begin{enumerate}
+	\item این اسکریپت از کلاس \lr{Area3D} اکستند می‌شود که برای تشخیص تصادف بدون فیزیک استفاده می‌شود.
+	\item تابع \lr{\_on\_body\_entered} زمانی فراخوانی می‌شود که یک نود با کلاینت فیزیکی وارد محدوده مانع شود.
+	\item ابتدا بررسی می‌شود که آیا نام نود وارد شده \lr{Player} است یا خیر.
+	\item اگر بازیکن بود، پیام \lr{Game Over} چاپ می‌شود.
+	\item سپس نود اصلی صحنه با استفاده از \lr{get\_tree().current\_scene} پیدا می‌شود.
+	\item اگر نود اصلی تابع \lr{game\_over} را داشت، آن تابع فراخوانی می‌شود.
+\end{enumerate}
+
+\subsection{Main.gd}
+
+\begin{lstlisting}[language=Python, caption={اسکریپت نود اصلی بازی}]
+extends Node3D
+
+\textlr{\# دسترسی به نودهای UI}
+@onready var score_label = $UI/ScoreLabel
+@onready var high_score_label = $UI/HighScoreLabel
+@onready var game_over_panel = $UI/GameOverPanel
+@onready var player = $Player
+
+var score = 0
+var high_score = 0
+var is_game_over = false
+
+\textlr{\# مسیر فایل ذخیره‌سازی (در پوشه مخصوص کاربر در سیستم عامل ذخیره می‌شود)}
+const SAVE_PATH = "user://savegame.cfg"
+
+func _ready():
+	\textlr{\# وصل کردن دکمه ریستارت}
+	$UI/GameOverPanel/RestartButton.pressed.connect(restart_game)
+	
+	\textlr{\# لود کردن بهترین رکورد از فایل}
+	load_high_score()
+	
+	\textlr{\# نمایش اولیه}
+	update_ui()
+
+func _process(delta):
+	if is_game_over:
+		return
+		
+	\textlr{\# افزایش امتیاز}
+	score += 1
+	
+	\textlr{\# اگر رکورد را شکستیم، های‌اسکور همزمان آپدیت شود}
+	if score > high_score:
+		high_score = score
+	
+	\textlr{\# به‌روزرسانی متن‌ها}
+	update_ui()
+
+func update_ui():
+	score_label.text = "Score: " + str(score)
+	high_score_label.text = "Best: " + str(high_score)
+
+func game_over():
+	if is_game_over: return
+	is_game_over = true
+	
+	\textlr{\# ذخیره رکورد جدید (اگر تغییری کرده باشد)}
+	save_high_score()
+	
+	game_over_panel.visible = true
+	player.set_physics_process(false)
+
+func restart_game():
+	get_tree().reload_current_scene()
+
+\textlr{\# --- توابع ذخیره و لود (سیستم PlayerPrefs) ---}
+
+func save_high_score():
+	var config = ConfigFile.new()
+	\textlr{\# مقدار high_score را با کلید "best_score" در بخش "game" ذخیره می‌کنیم}
+	config.set_value("game", "best_score", high_score)
+	config.save(SAVE_PATH)
+
+func load_high_score():
+	var config = ConfigFile.new()
+	\textlr{\# تلاش برای باز کردن فایل}
+	var err = config.load(SAVE_PATH)
+	
+	\textlr{\# اگر فایل با موفقیت باز شد}
+	if err == OK:
+		\textlr{\# مقدار را می‌خوانیم (اگر نبود، پیش‌فرض 0 برمی‌گرداند)}
+		high_score = config.get_value("game", "best_score", 0)
+	else:
+		\textlr{\# اگر فایلی نبود (بار اول اجرای بازی)}
+		high_score = 0
+\end{lstlisting}
+
+\textbf{توضیحات:}
+\begin{enumerate}
+	\item این اسکریپت از کلاس \lr{Node3D} اکستند می‌شود و نود اصلی بازی است.
+	\item چهار متغیر \lr{@onready} تعریف شده‌اند که بعد از لود صحنه مقداردهی می‌شوند: \lr{score\_label}، \lr{high\_score\_label}، \lr{game\_over\_panel} و \lr{player}.
+	\item متغیرهای \lr{score}، \lr{high\_score} و \lr{is\_game\_over} برای مدیریت وضعیت بازی استفاده می‌شوند.
+	\item ثابت \lr{SAVE\_PATH} مسیر فایل ذخیره‌سازی را تعریف می‌کند.
+	\item در تابع \lr{\_ready}، دکمه ریستارت به تابع \lr{restart\_game} وصل می‌شود، بهترین امتیاز لود می‌شود و رابط کاربری به‌روزرسانی می‌شود.
+	\item تابع \lr{\_process} در هر فریم اجرا می‌شود و اگر بازی تمام نشده باشد، امتیاز را افزایش می‌دهد.
+	\item اگر امتیاز فعلی بیشتر از بهترین امتیاز باشد، بهترین امتیاز آپدیت می‌شود.
+	\item تابع \lr{update\_ui} برچسب‌های امتیاز و بهترین امتیاز را به‌روز می‌کند.
+	\item تابع \lr{game\_over} وضعیت باخت را فعال می‌کند، امتیاز را ذخیره می‌کند و پنل \lr{Game Over} را نمایش می‌دهد.
+	\item تابع \lr{restart\_game} صحنه فعلی را دوباره لود می‌کند.
+	\item توابع \lr{save\_high\_score} و \lr{load\_high\_score} برای ذخیره و بارگذاری بهترین امتیاز در فایل استفاده می‌شوند.
+\end{enumerate}
+
+\subsection{LevelGenerator.gd}
+
+\begin{lstlisting}[language=Python, caption={اسکریپت تولیدکننده سطح}]
+extends Node
+
+\textlr{\# متغیرهایی که باید در اینسپکتور مقداردهی شوند}
+@export var road_tile_scene: PackedScene
+@export var player: Node3D
+
+var spawn_z = 0.0     \textlr{\# موقعیت شروع ساخت جاده}
+var tile_length = 20.0 \textlr{\# طول هر قطعه جاده}
+var active_tiles = [] \textlr{\# لیستی برای نگه داشتن جاده‌های فعال}
+
+func _ready():
+	\textlr{\# در شروع بازی، ۱۰ تکه جاده می‌سازیم تا جلو خالی نباشد}
+	for i in range(10):
+		spawn_tile()
+
+func _process(delta):
+	\textlr{\# اگر بازیکن وجود نداشت (مثلا باخته بود) کاری نکن}
+	if not player:
+		return
+		
+	\textlr{\# بررسی فاصله: اگر بازیکن از اولین جاده لیست عبور کرد}
+	\textlr{\# (چون حرکت به سمت منفی Z است، شرط کمی متفاوت است)}
+	if active_tiles.size() > 0:
+		var first_tile = active_tiles[0]
+		if player.position.z < first_tile.position.z - tile_length:
+			\textlr{\# جاده قدیمی را حذف کن}
+			active_tiles.pop_front() \textlr{\# حذف از لیست}
+			first_tile.queue_free()  \textlr{\# حذف از بازی}
+			
+			\textlr{\# یک جاده جدید در انتها بساز}
+			spawn_tile()
+
+func spawn_tile():
+	var tile = road_tile_scene.instantiate()
+	add_child(tile)
+	
+	\textlr{\# تنظیم موقعیت}
+	tile.position.z = spawn_z
+	
+	\textlr{\# موقعیت بعدی را ۲۰ متر جلوتر (به سمت منفی) می‌بریم}
+	spawn_z -= tile_length
+	
+	\textlr{\# به لیست اضافه می‌کنیم}
+	active_tiles.append(tile)
+\end{lstlisting}
+
+\textbf{توضیحات:}
+\begin{enumerate}
+	\item این اسکریپت از کلاس \lr{Node} اکستند می‌شود و مسئول تولید پویای جاده است.
+	\item دو متغیر \lr{@export} تعریف شده‌اند که در اینسپکتور قابل تنظیم هستند: \lr{road\_tile\_scene} و \lr{player}.
+	\item متغیرهای \lr{spawn\_z}، \lr{tile\_length} و \lr{active\_tiles} برای مدیریت موقعیت و لیست تکه‌های جاده استفاده می‌شوند.
+	\item در تابع \lr{\_ready}، 10 تکه جاده اولیه ایجاد می‌شوند.
+	\item تابع \lr{\_process} در هر فریم چک می‌کند که آیا بازیکن از اولین تکه جاده عبور کرده است یا خیر.
+	\item اگر عبور کرده بود، اولین تکه جاده از لیست حذف و از بازی آزاد می‌شود.
+	\item سپس یک تکه جاده جدید در انتهای مسیر ایجاد می‌شود.
+	\item تابع \lr{spawn\_tile} یک نمونه از صحنه جاده ایجاد می‌کند، موقعیت آن را تنظیم می‌کند و به لیست تکه‌های فعال اضافه می‌کند.
+\end{enumerate}
+
+\subsection{RoadTile.gd}
+
+\begin{lstlisting}[language=Python, caption={اسکریپت تکه جاده}]
+extends Node3D
+
+\textlr{\# بارگذاری صحنه مانع}
+var obstacle_scene = preload("res://Scenes/Obstacle.tscn")
+
+func _ready():
+	spawn_obstacle()
+
+func spawn_obstacle():
+	\textlr{\# یک عدد تصادفی بین 0 تا 2 انتخاب می‌کنیم (برای 3 لاین)}
+	\textlr{\# لاین‌ها: -1 (چپ)، 0 (وسط)، 1 (راست)}
+	var random_index = randi() % 3  \textlr{\# نتیجه میشه 0 یا 1 یا 2}
+	var lane = random_index - 1     \textlr{\# تبدیل میشه به -1 یا 0 یا 1}
+	
+	\textlr{\# ساخت نمونه از مانع}
+	var obstacle = obstacle_scene.instantiate()
+	add_child(obstacle)
+	
+	\textlr{\# تنظیم موقعیت مانع}
+	\textlr{\# X: بر اساس لاین (فاصله 3 متر)}
+	\textlr{\# Y: کمی بالاتر از زمین (مثلا 0.5)}
+	\textlr{\# Z: در یک جای تصادفی روی طول جاده (مثلا بین -5 تا -15)}
+	var random_z = randf_range(-5.0, -15.0)
+	obstacle.position = Vector3(lane * 3.0, 0.5, random_z)
+\end{lstlisting}
+
+\textbf{توضیحات:}
+\begin{enumerate}
+	\item این اسکریپت از کلاس \lr{Node3D} اکستند می‌شود و یک تکه از جاده را مدیریت می‌کند.
+	\item صحنه مانع با استفاده از \lr{preload} بارگذاری می‌شود.
+	\item در تابع \lr{\_ready}، یک مانع تصادفی ایجاد می‌شود.
+	\item تابع \lr{spawn\_obstacle} یک عدد تصادفی بین 0 تا 2 تولید می‌کند.
+	\item این عدد به -1، 0 یا 1 تبدیل می‌شود که نشان‌دهنده لاین چپ، وسط یا راست است.
+	\item یک نمونه از مانع ایجاد می‌شود و به تکه جاده اضافه می‌شود.
+	\item موقعیت مانع بر اساس لاین (X)، ارتفاع کمی بالاتر از زمین (Y) و یک موقعیت تصادفی روی محور Z تنظیم می‌شود.
+\end{enumerate}
+
+\end{document}

@@ -1,0 +1,20 @@
+[gd_scene load_steps=5 format=3 uid="uid://b3vf4r1i3m20k"]
+
+[ext_resource type="Script" uid="uid://q2qff1tednmp" path="res://Scripts/obstacle.gd" id="1_2p81s"]
+[ext_resource type="Material" uid="uid://dy6xgkxcyxiim" path="res://Assets/RedMaterial.tres" id="1_15o2q"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_2p81s"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_rvx1i"]
+
+[node name="Obstacle" type="Area3D" groups=["obstacles"]]
+script = ExtResource("1_2p81s")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+material_override = ExtResource("1_15o2q")
+mesh = SubResource("BoxMesh_2p81s")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_rvx1i")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]

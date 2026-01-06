@@ -1,0 +1,88 @@
+[gd_scene load_steps=10 format=3 uid="uid://bnkd5ss641w5b"]
+
+[ext_resource type="Material" uid="uid://d2i6c87ay0sat" path="res://Assets/BlueMaterial.tres" id="1_jjgbg"]
+[ext_resource type="Script" uid="uid://0h4ngmmxji66" path="res://Scripts/main.gd" id="1_kry3j"]
+[ext_resource type="PackedScene" uid="uid://bw60521cms4w0" path="res://Scenes/player.tscn" id="2_bo1nx"]
+[ext_resource type="PackedScene" uid="uid://d3tbuejpetto5" path="res://Scenes/RoadTile.tscn" id="3_8gbba"]
+[ext_resource type="Script" uid="uid://cb7x34bod6jjg" path="res://Scripts/LevelGenerator.gd" id="4_jjvhh"]
+
+[sub_resource type="Environment" id="Environment_bo1nx"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_21xkr"]
+font_size = 40
+
+[sub_resource type="LabelSettings" id="LabelSettings_6bp64"]
+font_size = 50
+
+[sub_resource type="LabelSettings" id="LabelSettings_kry3j"]
+font_size = 30
+font_color = Color(0.7923764, 0.79178643, 0, 1)
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_kry3j")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 0, 0)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_bo1nx")
+
+[node name="Ground" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -40)
+material_override = ExtResource("1_jjgbg")
+size = Vector3(10, 0.1, 100)
+
+[node name="Player" parent="." instance=ExtResource("2_bo1nx")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.10033405, 0, 0.15490341)
+
+[node name="RoadTile" parent="." instance=ExtResource("3_8gbba")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -10)
+
+[node name="LevelGenerator" type="Node" parent="." node_paths=PackedStringArray("player")]
+script = ExtResource("4_jjvhh")
+road_tile_scene = ExtResource("3_8gbba")
+player = NodePath("../Player")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="ScoreLabel" type="Label" parent="UI"]
+offset_left = 51.0
+offset_top = 27.0
+offset_right = 202.0
+offset_bottom = 82.0
+text = "Score: 0"
+label_settings = SubResource("LabelSettings_21xkr")
+
+[node name="GameOverPanel" type="Panel" parent="UI"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="UI/GameOverPanel"]
+layout_mode = 0
+offset_left = 442.0
+offset_top = 285.0
+offset_right = 728.0
+offset_bottom = 354.0
+text = "GAME OVER"
+label_settings = SubResource("LabelSettings_6bp64")
+
+[node name="RestartButton" type="Button" parent="UI/GameOverPanel"]
+layout_mode = 0
+offset_left = 534.0
+offset_top = 367.0
+offset_right = 647.0
+offset_bottom = 417.0
+theme_override_font_sizes/font_size = 30
+text = "Restart"
+
+[node name="HighScoreLabel" type="Label" parent="UI"]
+offset_left = 53.0
+offset_top = 84.0
+offset_right = 150.0
+offset_bottom = 126.0
+text = "Best: 0"
+label_settings = SubResource("LabelSettings_kry3j")
